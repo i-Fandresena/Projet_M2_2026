@@ -1,0 +1,97 @@
+# ============================================================
+# docker-compose.yml — Solution complète TP Section 16 & 17
+# ============================================================
+networks:
+  # Réseau bridge partagé entre tous les services
+  tp-network:
+    driver: bridge
+
+volumes:
+  # Volume partagé pour les logs NGINX (supervision)
+  nginx-logs:
+
+services:
+
+  # ----------------------------------------------------------
+  # Service 1 — whoami (Section 16 & 17)
+  # containous/whoami : image moderne, même comportement que jwilder/whoami
+  # Répond avec l'identité du conteneur qui répond.
+  # ----------------------------------------------------------
+  # SCALING : utiliser expose (pas ports) pour permettre --scale sans conflit
+  whoami:
+    image: containous/whoami
+    networks:
+      - tp-network
+    expose:
+      - "80"
+
+  # ----------------------------------------------------------
+  # Service 2 — web NGINX (Section 14 & 15)
+  # Sert la page index.html personnalisée sur le port 7000.
+  # ----------------------------------------------------------
+  web:
+    build:
+      context: ../web-server
+      dockerfile: Dockerfile
+    ports:
+      - "7000:80"
+    networks:
+      - tp-network
+    volumes:
+      # Bind mount : mise à jour de index.html sans rebuild
+      - ../web-server/index.html:/usr/share/nginx/html/index.html:ro
+      # Volume partagé pour les logs access/error
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      - redis
+
+  # ----------------------------------------------------------
+  # Service 3 — redis (cache)
+  # Accessible depuis les autres services via hostname "redis"
+  # ----------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    networks:
+      - tp-network
+    expose:
+      - "6379"
+
+  # ----------------------------------------------------------
+  # Service 4 — supervision (Section 15)
+  # Lit les logs NGINX depuis le volume partagé.
+  # ----------------------------------------------------------
+  supervision:
+    image: ubuntu:22.04
+    networks:
+      - tp-network
+    volumes:
+      - nginx-logs:/var/log/nginx:ro
+    command: >
+      bash -c "
+        echo 'Supervision démarrée. Attente des logs NGINX...';
+        tail -f /var/log/nginx/access.log 2>/dev/null || 
+        (echo 'Pas encore de logs. En attente...' && sleep infinity)
+      "
+    depends_on:
+      - web
+
+  # ----------------------------------------------------------
+  # Service 5 — client curl (Section 15)
+  # curlimages/curl : image officielle et moderne (remplace radial/busyboxplus)
+  # Envoie des requêtes au serveur web toutes les 5 secondes.
+  # ----------------------------------------------------------
+  client:
+    image: curlimages/curl:latest
+    networks:
+      - tp-network
+    command: >
+      sh -c "
+        echo 'Client demarre. Test du serveur web...';
+        while true; do
+          echo '--- Requete vers http://web/ ---';
+          curl -s http://web/ | grep -o 'Vive Grenoble.*' || echo 'Reponse recue';
+          sleep 5;
+        done
+      "
+    depends_on:
+      - web

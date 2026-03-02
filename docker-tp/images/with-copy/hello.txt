@@ -1,0 +1,3 @@
+Meeuuuuh ! Bonjour depuis Docker — TP M2 DevOPS 2026 !
+Cette image a été construite avec COPY pour injecter ce fichier.
+Ligne modifiee pour demo du cache !

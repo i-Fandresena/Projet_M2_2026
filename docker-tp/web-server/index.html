@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP DevOPS — Serveur NGINX Docker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #eaeaea;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            padding: 40px 60px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        h1 { color: #e94560; margin-bottom: 8px; }
+        h2 { color: #0f3460; margin: 0 0 24px; }
+        .badge {
+            background: #0f3460;
+            color: #e94560;
+            border-radius: 20px;
+            padding: 6px 18px;
+            font-size: 0.9em;
+            display: inline-block;
+            margin-top: 16px;
+        }
+        p { line-height: 1.7; color: #aaa; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>TP DevOPS — M2 2026</h2>
+        <h1>Vive Grenoble !!!</h1>
+        <p>Ce fichier est servi par un conteneur <strong>NGINX</strong> Docker.<br>
+           Il a été injecté via un <strong>bind mount</strong>.</p>
+        <div class="badge">Port 7000 → 80 (NGINX)</div>
+    </div>
+</body>
+</html>

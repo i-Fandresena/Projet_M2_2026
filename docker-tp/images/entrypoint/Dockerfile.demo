@@ -1,0 +1,2 @@
+FROM python:3.11-slim
+ENTRYPOINT ["python", "-c", "import sys; print('ENTRYPOINT - arguments recus :', sys.argv[1:] if len(sys.argv) > 1 else '(aucun)')"]
