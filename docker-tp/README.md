@@ -1,5 +1,5 @@
 ﻿# TP1 DevOPS — Docker & Docker Compose
-### M2 2026 — Université Grenoble Alpes
+### M2 2026 
 
 > Branche : `TP1_DevOPS`  
 > Auteur : i-Fandresena  
