@@ -53,18 +53,17 @@ $initial  = strtoupper(substr($username, 0, 1));
 
     <!-- Pied de page : utilisateur connecté + déconnexion -->
     <div class="sidebar-footer">
-        <div class="user-info mb-2">
+        <div class="user-card">
             <div class="user-avatar"><?= $initial ?></div>
             <div>
                 <div class="user-name"><?= $username ?></div>
                 <div class="user-role"><?= e(ucfirst($role)) ?></div>
             </div>
         </div>
-        <form method="post" action="<?= BASE_URL ?>?action=logout" class="mt-1">
+        <form method="post" action="<?= BASE_URL ?>?action=logout">
             <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
-            <button type="submit" class="btn btn-sm btn-outline-secondary w-100"
-                    style="font-size:0.75rem;color:#94A3B8;border-color:#334155;">
-                <i class="bi bi-box-arrow-left me-1"></i> Deconnexion
+            <button type="submit" class="btn-logout">
+                <i class="bi bi-box-arrow-left"></i> Deconnexion
             </button>
         </form>
     </div>
