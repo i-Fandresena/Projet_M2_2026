@@ -18,7 +18,7 @@ $initial  = strtoupper(substr($username, 0, 1));
 <aside class="sidebar">
 
     <!-- Logo + nom de l'application -->
-    <div class="sidebar-brand d-flex align-items-center gap-2">
+    <div class="sidebar-brand">
         <div class="sidebar-logo">
             <i class="bi bi-bank2 text-white" style="font-size:1.1rem;"></i>
         </div>

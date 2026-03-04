@@ -1,513 +1,526 @@
+﻿<?php
+/**
+ * views/auth/login.php — Page de connexion immersive
+ * Standalone (sans header.php / navbar.php)
+ */
+if (session_status() === PHP_SESSION_NONE) session_start();
+$error = $_SESSION['flash_error'] ?? null;
+if ($error) unset($_SESSION['flash_error']);
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion — <?= e(APP_NAME) ?></title>
-
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-          crossorigin="anonymous">
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet">
-
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            width: 100vw;
+            height: 100vh; width: 100vw;
+            overflow: hidden;
+            display: flex;
+            background: #09071a;
+        }
+
+        /* ═══════════ LEFT — ART PANEL ═══════════ */
+        .art-panel {
+            flex: 1;
+            position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #030712;
-            position: relative;
         }
 
-        /* ── Fond animé ── */
-        .bg-scene {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            overflow: hidden;
-            background: radial-gradient(ellipse at 20% 50%, #0c1a4a 0%, #030712 60%),
-                        radial-gradient(ellipse at 80% 20%, #0d2347 0%, transparent 50%);
+        /* Perspective grid */
+        .art-panel::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(139,92,246,.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139,92,246,.07) 1px, transparent 1px);
+            background-size: 48px 48px;
+            transform: perspective(600px) rotateX(10deg) scale(1.1);
+            transform-origin: top center;
         }
 
-        /* Lignes de grille */
-        .bg-scene::before {
+        /* Ambient radial glow */
+        .art-panel::after {
             content: '';
             position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(37,99,235,0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px);
-            background-size: 60px 60px;
+            width: 700px; height: 700px;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(139,92,246,.1) 0%, rgba(45,212,191,.05) 40%, transparent 70%);
+            pointer-events: none;
         }
 
-        /* Orbes lumineux */
-        .orb {
+        /* Constellation dots */
+        .constellation { position: absolute; inset: 0; z-index: 1; }
+        .star {
             position: absolute;
+            background: rgba(167,139,250,.55);
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.35;
-            animation: drift linear infinite;
+            animation: twinkle ease-in-out infinite;
         }
-        .orb-1 { width: 600px; height: 600px; background: #1d4ed8; top: -200px; left: -100px; animation-duration: 20s; }
-        .orb-2 { width: 400px; height: 400px; background: #4f46e5; bottom: -100px; right: 10%; animation-duration: 25s; animation-direction: reverse; }
-        .orb-3 { width: 300px; height: 300px; background: #0891b2; top: 40%; right: -80px; animation-duration: 18s; animation-delay: -6s; }
-
-        @keyframes drift {
-            0%   { transform: translate(0, 0) rotate(0deg); }
-            33%  { transform: translate(30px, -40px) rotate(120deg); }
-            66%  { transform: translate(-20px, 20px) rotate(240deg); }
-            100% { transform: translate(0, 0) rotate(360deg); }
+        @keyframes twinkle {
+            0%, 100% { opacity: .15; transform: scale(1); }
+            50%       { opacity: .7;  transform: scale(1.6); }
         }
 
-        /* Particules flottantes */
-        .particle {
-            position: absolute;
-            width: 3px; height: 3px;
-            border-radius: 50%;
-            background: rgba(99,179,237,0.6);
-            animation: floatUp linear infinite;
-        }
-        @keyframes floatUp {
-            0%   { transform: translateY(100vh) scale(0); opacity: 0; }
-            10%  { opacity: 1; }
-            90%  { opacity: 0.6; }
-            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        /* Center composition */
+        .art-center {
+            position: relative; z-index: 2;
+            text-align: center;
+            user-select: none;
         }
 
-        /* ── Séparateur droit : panneau info ── */
-        .login-scene {
+        /* Orbital system */
+        .orbital {
+            width: 200px; height: 200px;
             position: relative;
-            z-index: 10;
-            width: 100vw;
-            height: 100vh;
-            display: grid;
-            grid-template-columns: 1fr 480px;
+            margin: 0 auto 2.5rem;
         }
 
-        .scene-left {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 4rem 5rem;
-            animation: fadeSlideLeft 0.8s ease both;
-        }
-        @keyframes fadeSlideLeft {
-            from { opacity: 0; transform: translateX(-30px); }
-            to   { opacity: 1; transform: translateX(0); }
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid transparent;
         }
 
-        .scene-left .app-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(37,99,235,0.15);
-            border: 1px solid rgba(37,99,235,0.3);
-            color: #93c5fd;
-            font-size: 0.7rem;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            padding: 0.35rem 0.9rem;
-            border-radius: 100px;
-            margin-bottom: 2rem;
-            width: fit-content;
+        .ring-outer {
+            inset: 0;
+            border-color: rgba(139,92,246,.22);
+            animation: orbit 9s linear infinite;
+        }
+        .ring-outer::before {
+            content: '';
+            position: absolute;
+            top: -5px; left: 50%;
+            width: 10px; height: 10px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            box-shadow: 0 0 14px 3px rgba(139,92,246,.6);
+            transform: translateX(-50%);
         }
 
-        .scene-left h1 {
-            font-size: clamp(2rem, 4vw, 3.2rem);
-            font-weight: 800;
-            color: #f8fafc;
-            line-height: 1.15;
-            margin-bottom: 1.25rem;
+        .ring-mid {
+            inset: 24px;
+            border-color: rgba(45,212,191,.18);
+            animation: orbit 6s linear infinite reverse;
+        }
+        .ring-mid::before {
+            content: '';
+            position: absolute;
+            bottom: -4px; left: 50%;
+            width: 7px; height: 7px;
+            background: #2dd4bf;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px rgba(45,212,191,.55);
+            transform: translateX(-50%);
         }
 
-        .scene-left h1 span {
-            background: linear-gradient(135deg, #60a5fa, #818cf8);
+        .ring-inner {
+            inset: 50px;
+            border-color: rgba(251,191,36,.12);
+            animation: orbit 12s linear infinite;
+        }
+        .ring-inner::before {
+            content: '';
+            position: absolute;
+            top: -3px; right: 12px;
+            width: 5px; height: 5px;
+            background: #fbbf24;
+            border-radius: 50%;
+            box-shadow: 0 0 8px 2px rgba(251,191,36,.5);
+        }
+
+        @keyframes orbit {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* Core icon */
+        .orbital-core {
+            position: absolute;
+            inset: 66px;
+            border-radius: 50%;
+            background: radial-gradient(135deg, rgba(124,58,237,.3), rgba(45,212,191,.15));
+            border: 1px solid rgba(139,92,246,.3);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .orbital-core .bi {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #c4b5fd, #2dd4bf);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .scene-left p {
-            color: #64748b;
-            font-size: 0.95rem;
-            line-height: 1.7;
-            max-width: 440px;
-            margin-bottom: 3rem;
+        .art-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ede9fe;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 0.6rem;
+        }
+        .art-title em {
+            font-style: normal;
+            background: linear-gradient(90deg, #a78bfa 20%, #2dd4bf 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .art-sub {
+            font-size: 0.78rem;
+            color: #514e6a;
+            line-height: 1.65;
+            max-width: 300px;
+            margin: 0 auto;
         }
 
-        .features-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.9rem;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
-            gap: 0.875rem;
-            color: #94a3b8;
-            font-size: 0.85rem;
-        }
-
-        .feature-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.95rem;
+        /* ═══════════ RIGHT — FORM PANEL ═══════════ */
+        .form-panel {
+            width: 430px;
             flex-shrink: 0;
-        }
-
-        /* ── Panneau formulaire ── */
-        .scene-right {
-            background: rgba(15,23,42,0.7);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border-left: 1px solid rgba(255,255,255,0.06);
+            background: #100d1e;
+            border-left: 1px solid rgba(139,92,246,.12);
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 3rem 2.75rem;
-            animation: fadeSlideRight 0.8s ease both;
+            padding: 2.5rem 2.25rem;
             position: relative;
             overflow: hidden;
         }
-        @keyframes fadeSlideRight {
-            from { opacity: 0; transform: translateX(30px); }
-            to   { opacity: 1; transform: translateX(0); }
-        }
 
-        /* ligne déco top */
-        .scene-right::before {
+        /* Top gradient line */
+        .form-panel::before {
             content: '';
             position: absolute;
-            top: 0; left: 2.75rem; right: 2.75rem;
+            top: 0; left: 0; right: 0;
             height: 2px;
-            background: linear-gradient(90deg, transparent, #3b82f6, #6366f1, transparent);
+            background: linear-gradient(90deg, transparent 0%, #7c3aed 30%, #2dd4bf 70%, transparent 100%);
+        }
+
+        /* Subtle background glow */
+        .form-panel::after {
+            content: '';
+            position: absolute;
+            width: 300px; height: 300px;
+            right: -80px; bottom: -80px;
+            background: radial-gradient(circle, rgba(139,92,246,.06) 0%, transparent 70%);
+            pointer-events: none;
         }
 
         .form-logo {
-            width: 52px; height: 52px;
-            background: linear-gradient(135deg, #2563eb, #4f46e5);
-            border-radius: 14px;
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #7c3aed, #2dd4bf);
+            border-radius: 9px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; color: #fff;
+            color: #fff;
+            font-size: 1.1rem;
             margin-bottom: 1.75rem;
-            box-shadow: 0 0 30px rgba(37,99,235,0.4);
+            box-shadow: 0 4px 16px rgba(124,58,237,.38);
+            position: relative; z-index: 1;
         }
 
-        .form-title {
-            font-size: 1.6rem;
+        .form-heading {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ede9fe;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.35rem;
+            position: relative; z-index: 1;
+        }
+
+        .form-sub {
+            font-size: 0.77rem;
+            color: #514e6a;
+            margin-bottom: 1.875rem;
+            position: relative; z-index: 1;
+        }
+
+        /* Error */
+        .form-error {
+            background: rgba(251,113,133,.08);
+            border: 1px solid rgba(251,113,133,.22);
+            border-radius: 7px;
+            color: #fda4af;
+            font-size: 0.77rem;
+            padding: 0.65rem 0.875rem;
+            margin-bottom: 1.125rem;
+            display: flex; align-items: center; gap: 0.5rem;
+            animation: popIn .2s ease;
+            position: relative; z-index: 1;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Fields */
+        .field { margin-bottom: 0.875rem; position: relative; z-index: 1; }
+
+        .field-label {
+            display: block;
+            font-size: 0.71rem;
             font-weight: 700;
-            color: #f1f5f9;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: #9d9abc;
             margin-bottom: 0.4rem;
         }
 
-        .form-subtitle {
-            color: #475569;
-            font-size: 0.82rem;
-            margin-bottom: 2rem;
+        .field-wrap { position: relative; }
+
+        .field-icon {
+            position: absolute;
+            left: 0.875rem; top: 50%;
+            transform: translateY(-50%);
+            color: #514e6a;
+            font-size: 0.88rem;
+            pointer-events: none;
+            transition: color .15s;
         }
 
-        /* Demo pill */
-        .demo-pill {
-            background: rgba(37,99,235,0.08);
-            border: 1px solid rgba(37,99,235,0.2);
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1.75rem;
-            display: flex;
-            gap: 1rem;
+        .field-input {
+            width: 100%;
+            background: rgba(255,255,255,.038);
+            border: 1px solid rgba(139,92,246,.1);
+            border-radius: 8px;
+            color: #ede9fe;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            padding: 0.775rem 0.875rem 0.775rem 2.75rem;
+            outline: none;
+            transition: all .15s;
         }
 
-        .demo-pill-label {
-            font-size: 0.62rem;
-            color: #60a5fa;
+        .field-input::placeholder { color: #3a3857; }
+
+        .field-input:focus {
+            background: rgba(139,92,246,.07);
+            border-color: rgba(139,92,246,.38);
+            box-shadow: 0 0 0 3px rgba(139,92,246,.09);
+        }
+
+        .field-wrap:focus-within .field-icon { color: #a78bfa; }
+
+        /* Submit */
+        .btn-signin {
+            width: 100%;
+            background: linear-gradient(130deg, #7c3aed 0%, #4338ca 55%, #1d4ed8 100%);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 0.875rem;
+            cursor: pointer;
+            margin-top: 0.375rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(124,58,237,.38);
+            letter-spacing: 0.01em;
+            transition: box-shadow .2s, transform .2s;
+            z-index: 1;
+        }
+
+        .btn-signin::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -120%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+            transition: left .45s;
+        }
+
+        .btn-signin:hover {
+            box-shadow: 0 6px 28px rgba(124,58,237,.52);
+            transform: translateY(-1px);
+        }
+        .btn-signin:hover::after { left: 120%; }
+
+        /* Demo credentials */
+        .demo-section {
+            margin-top: 1.75rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(139,92,246,.08);
+            position: relative; z-index: 1;
+        }
+
+        .demo-label {
+            font-size: 0.61rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #3a3857;
+            text-align: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .demo-card {
+            background: rgba(255,255,255,.02);
+            border: 1px solid rgba(139,92,246,.08);
+            border-radius: 7px;
+            padding: 0.625rem 0.75rem;
+        }
+
+        .demo-role {
+            font-size: 0.59rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             margin-bottom: 0.3rem;
         }
 
-        .demo-pill code {
-            font-size: 0.75rem;
-            color: #94a3b8;
-            background: none;
-        }
+        .demo-card.is-admin .demo-role { color: #a78bfa; }
+        .demo-card.is-user  .demo-role { color: #2dd4bf; }
 
-        .demo-pill-sep {
-            width: 1px;
-            background: rgba(255,255,255,0.07);
-        }
-
-        /* Champs */
-        .field-group {
-            position: relative;
-            margin-bottom: 1.25rem;
-        }
-
-        .field-label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #94a3b8;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        .field-wrap {
-            position: relative;
-        }
-
-        .field-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #475569;
-            font-size: 1rem;
-            pointer-events: none;
-            transition: color 0.2s;
-        }
-
-        .field-input {
-            width: 100%;
-            background: rgba(30,41,59,0.6);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 10px;
-            color: #f1f5f9;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.875rem;
-            padding: 0.8rem 0.875rem 0.8rem 2.75rem;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-        }
-
-        .field-input::placeholder { color: #334155; }
-
-        .field-input:focus {
-            border-color: rgba(59,130,246,0.6);
-            background: rgba(30,41,59,0.9);
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
-        }
-
-        .field-group:focus-within .field-icon { color: #60a5fa; }
-
-        /* Bouton */
-        .btn-submit {
-            width: 100%;
-            padding: 0.9rem;
-            background: linear-gradient(135deg, #2563eb, #4f46e5);
-            border: none;
-            border-radius: 10px;
-            color: #fff;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.15s, box-shadow 0.15s;
-            margin-top: 0.5rem;
-        }
-
-        .btn-submit::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .btn-submit:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 30px rgba(37,99,235,0.45);
-        }
-
-        .btn-submit:hover::after { opacity: 1; }
-
-        .btn-submit:active { transform: translateY(0); }
-
-        /* Alerte */
-        .login-alert {
-            background: rgba(220,38,38,0.1);
-            border: 1px solid rgba(220,38,38,0.3);
-            border-radius: 10px;
-            color: #fca5a5;
-            font-size: 0.8rem;
-            padding: 0.75rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .login-footer {
-            margin-top: 2rem;
-            text-align: center;
-            color: #1e293b;
-            font-size: 0.7rem;
+        .demo-cred {
+            font-size: 0.71rem;
+            color: #6e6a8a;
+            line-height: 1.5;
+            font-variant-numeric: tabular-nums;
         }
 
         /* Responsive */
-        @media (max-width: 900px) {
-            .login-scene { grid-template-columns: 1fr; }
-            .scene-left { display: none; }
-            .scene-right {
-                border-left: none;
-                border-top: 1px solid rgba(255,255,255,0.06);
-                justify-content: center;
-            }
+        @media (max-width: 820px) {
+            .art-panel { display: none; }
+            .form-panel { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-<!-- Fond animé -->
-<div class="bg-scene">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-    <!-- Particules -->
-    <?php for ($i = 0; $i < 20; $i++): ?>
-        <div class="particle" style="
-            left: <?= rand(0,100) ?>%;
-            animation-duration: <?= rand(8,20) ?>s;
-            animation-delay: -<?= rand(0,15) ?>s;
-            width: <?= rand(2,4) ?>px;
-            height: <?= rand(2,4) ?>px;
-            opacity: <?= rand(3,7)/10 ?>;
-        "></div>
-    <?php endfor; ?>
-</div>
+    <!-- ART PANEL (left) -->
+    <div class="art-panel">
+        <div class="constellation" id="constellation"></div>
 
-<!-- Scène principale -->
-<div class="login-scene">
+        <div class="art-center">
+            <!-- Orbital animation -->
+            <div class="orbital">
+                <div class="ring ring-outer"></div>
+                <div class="ring ring-mid"></div>
+                <div class="ring ring-inner"></div>
+                <div class="orbital-core">
+                    <i class="bi bi-bank2"></i>
+                </div>
+            </div>
 
-    <!-- Côté gauche : présentation -->
-    <div class="scene-left">
-        <div class="app-tag">
-            <i class="bi bi-bank2"></i>
-            Système de supervision
-        </div>
-        <h1>Contrôlez chaque<br><span>transaction</span><br>en temps réel</h1>
-        <p>Plateforme de supervision bancaire sécurisée. Gérez les versements, suivez les audits et maîtrisez les soldes de vos clients grâce aux triggers MySQL.</p>
-        <div class="features-list">
-            <div class="feature-item">
-                <div class="feature-icon" style="background:rgba(37,99,235,0.15);color:#60a5fa;">
-                    <i class="bi bi-shield-lock-fill"></i>
-                </div>
-                <span>Authentification sécurisée avec protection CSRF</span>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon" style="background:rgba(79,70,229,0.15);color:#a78bfa;">
-                    <i class="bi bi-activity"></i>
-                </div>
-                <span>Triggers MySQL automatiques sur chaque opération</span>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon" style="background:rgba(8,145,178,0.15);color:#67e8f9;">
-                    <i class="bi bi-graph-up-arrow"></i>
-                </div>
-                <span>Journal d'audit complet et filtrable</span>
-            </div>
+            <h1 class="art-title">Supervision<br><em>Bancaire</em></h1>
+            <p class="art-sub">
+                Surveillance des opérations en temps réel.<br>
+                Audit automatisé via triggers MySQL.
+            </p>
         </div>
     </div>
 
-    <!-- Côté droit : formulaire -->
-    <div class="scene-right">
+    <!-- FORM PANEL (right) -->
+    <div class="form-panel">
 
         <div class="form-logo">
             <i class="bi bi-bank2"></i>
         </div>
 
-        <div class="form-title">Bienvenue</div>
-        <div class="form-subtitle">Connectez-vous pour accéder au portail de supervision</div>
+        <h2 class="form-heading">Connexion</h2>
+        <p class="form-sub">Accès sécurisé à la plateforme</p>
 
-        <!-- Message d'erreur -->
-        <?php if (!empty($error)): ?>
-            <div class="login-alert">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <span><?= e($error) ?></span>
+        <?php if ($error): ?>
+            <div class="form-error">
+                <i class="bi bi-exclamation-circle"></i>
+                <?= e($error) ?>
             </div>
         <?php endif; ?>
 
-        <!-- Comptes de démo -->
-        <div class="demo-pill">
-            <div>
-                <div class="demo-pill-label">Admin</div>
-                <code>admin</code> / <code>Admin123!</code>
-            </div>
-            <div class="demo-pill-sep"></div>
-            <div>
-                <div class="demo-pill-label">Utilisateur</div>
-                <code>user1</code> / <code>User123!</code>
-            </div>
-        </div>
-
-        <!-- Formulaire -->
-        <form method="post" action="<?= BASE_URL ?>/?action=login" novalidate>
+        <form method="post" action="<?= BASE_URL ?>?action=login" novalidate>
             <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
 
-            <div class="field-group">
-                <label for="username" class="field-label">Identifiant</label>
+            <div class="field">
+                <label class="field-label" for="username">Identifiant</label>
                 <div class="field-wrap">
                     <i class="bi bi-person field-icon"></i>
                     <input type="text"
                            id="username"
                            name="username"
                            class="field-input"
-                           placeholder="Entrez votre identifiant"
-                           value="<?= e($_POST['username'] ?? '') ?>"
+                           placeholder="Nom d'utilisateur"
                            autocomplete="username"
-                           required>
+                           required
+                           value="<?= e($_POST['username'] ?? '') ?>">
                 </div>
             </div>
 
-            <div class="field-group">
-                <label for="password" class="field-label">Mot de passe</label>
+            <div class="field">
+                <label class="field-label" for="password">Mot de passe</label>
                 <div class="field-wrap">
                     <i class="bi bi-lock field-icon"></i>
                     <input type="password"
                            id="password"
                            name="password"
                            class="field-input"
-                           placeholder="••••••••••"
+                           placeholder="••••••••"
                            autocomplete="current-password"
                            required>
                 </div>
             </div>
 
-            <button type="submit" class="btn-submit">
-                <i class="bi bi-arrow-right-circle me-2"></i>Se connecter
-            </button>
+            <button type="submit" class="btn-signin">Se connecter</button>
         </form>
 
-        <div class="login-footer">
-            <?= e(APP_NAME) ?> &mdash; v<?= e(APP_VERSION) ?> &mdash; <?= date('Y') ?>
+        <div class="demo-section">
+            <div class="demo-label">Accès de démonstration</div>
+            <div class="demo-grid">
+                <div class="demo-card is-admin">
+                    <div class="demo-role">Admin</div>
+                    <div class="demo-cred">admin<br>Admin2024!</div>
+                </div>
+                <div class="demo-card is-user">
+                    <div class="demo-role">Utilisateur</div>
+                    <div class="demo-cred">user1<br>User2024!</div>
+                </div>
+            </div>
         </div>
 
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
+    <script>
+    (function () {
+        // Generate constellation stars
+        var c = document.getElementById('constellation');
+        if (!c) return;
+        for (var i = 0; i < 30; i++) {
+            var s = document.createElement('div');
+            s.className = 'star';
+            var sz = Math.random() * 2.5 + 1;
+            s.style.cssText =
+                'width:' + sz + 'px;height:' + sz + 'px;' +
+                'left:' + (Math.random() * 100) + '%;' +
+                'top:'  + (Math.random() * 100) + '%;' +
+                'animation-duration:' + (2.5 + Math.random() * 4) + 's;' +
+                'animation-delay:-'   + (Math.random() * 5) + 's;';
+            c.appendChild(s);
+        }
+    })();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
 </body>
 </html>
