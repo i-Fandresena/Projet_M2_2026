@@ -1,0 +1,31 @@
+# ============================================================
+# public/.htaccess — Dossier public de l'application
+# Redirige toutes les requêtes vers index.php (Front Controller)
+# ============================================================
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Base obligatoire pour XAMPP (adapter si le dossier racine diffère)
+    RewriteBase /BDA/public/
+
+    # Si le fichier ou dossier demandé existe physiquement, le servir directement
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Sinon, rediriger vers index.php en transmettant la query string
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# En-têtes de sécurité HTTP
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Désactiver la signature du serveur
+ServerSignature Off

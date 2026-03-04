@@ -1,0 +1,18 @@
+# Fichiers personnels / cours
+*.pdf
+*.jpeg
+*.jpg
+*.png
+
+# Dépendances et caches
+vendor/
+node_modules/
+*.log
+
+# Fichiers systèmes
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Configuration locale XAMPP (ne pas versionner les identifiants de prod)
+# config/config.php  ← décommentez si vous avez des secrets en prod

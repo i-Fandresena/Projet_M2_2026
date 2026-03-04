@@ -1,0 +1,15 @@
+# ============================================================
+# .htaccess — Racine du projet BDA
+# Bloque la navigation dans les répertoires et l'accès direct
+# aux dossiers sensibles (config, models, controllers, views)
+# ============================================================
+
+Options -Indexes
+
+# Bloquer l'accès direct aux dossiers internes (hors public/)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Bloquer l'accès direct aux dossiers métier
+    RewriteRule ^(config|models|controllers|views|database)(/.*)?$ - [F,L]
+</IfModule>
