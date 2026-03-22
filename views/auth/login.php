@@ -488,11 +488,11 @@ if ($error) unset($_SESSION['flash_error']);
             <div class="demo-grid">
                 <div class="demo-card is-admin">
                     <div class="demo-role">Admin</div>
-                    <div class="demo-cred">admin<br>Admin123!</div>
+                    <div class="demo-cred">admin<br>Admin2024!</div>
                 </div>
                 <div class="demo-card is-user">
                     <div class="demo-role">Utilisateur</div>
-                    <div class="demo-cred">user1<br>User123!</div>
+                    <div class="demo-cred">user1<br>User2024!</div>
                 </div>
             </div>
         </div>
