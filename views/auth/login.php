@@ -1,556 +1,523 @@
 ﻿<?php
 /**
- * views/auth/login.php - Immersive blurred login page
- * Standalone (no header/navbar include)
+ * views/auth/login.php — Page de connexion immersive
+ * Standalone (sans header.php / navbar.php)
  */
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+if (session_status() === PHP_SESSION_NONE) session_start();
 $error = $_SESSION['flash_error'] ?? null;
-if ($error) {
-    unset($_SESSION['flash_error']);
-}
+if ($error) unset($_SESSION['flash_error']);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - <?= e(APP_NAME) ?></title>
-
+    <title>Connexion — <?= e(APP_NAME) ?></title>
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet">
-
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            width: 100vw;
+            height: 100vh; width: 100vw;
             overflow: hidden;
+            display: flex;
+            background: #09071a;
+        }
+
+        /* ═══════════ LEFT — ART PANEL ═══════════ */
+        .art-panel {
+            flex: 1;
             position: relative;
-            display: grid;
-            place-items: center;
-            background: #e9edf5;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .login-bg {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            background:
-                radial-gradient(circle at 16% 20%, rgba(53,89,224,0.34), transparent 35%),
-                radial-gradient(circle at 84% 14%, rgba(6,182,212,0.26), transparent 30%),
-                radial-gradient(circle at 70% 82%, rgba(30,64,175,0.22), transparent 36%),
-                linear-gradient(155deg, #eff3fa 0%, #e6ebf5 100%);
+        /* Perspective grid */
+        .art-panel::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(139,92,246,.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139,92,246,.07) 1px, transparent 1px);
+            background-size: 48px 48px;
+            transform: perspective(600px) rotateX(10deg) scale(1.1);
+            transform-origin: top center;
         }
 
-        .blur-orb {
+        /* Ambient radial glow */
+        .art-panel::after {
+            content: '';
+            position: absolute;
+            width: 700px; height: 700px;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(139,92,246,.1) 0%, rgba(45,212,191,.05) 40%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Constellation dots */
+        .constellation { position: absolute; inset: 0; z-index: 1; }
+        .star {
+            position: absolute;
+            background: rgba(167,139,250,.55);
+            border-radius: 50%;
+            animation: twinkle ease-in-out infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: .15; transform: scale(1); }
+            50%       { opacity: .7;  transform: scale(1.6); }
+        }
+
+        /* Center composition */
+        .art-center {
+            position: relative; z-index: 2;
+            text-align: center;
+            user-select: none;
+        }
+
+        /* Orbital system */
+        .orbital {
+            width: 200px; height: 200px;
+            position: relative;
+            margin: 0 auto 2.5rem;
+        }
+
+        .ring {
             position: absolute;
             border-radius: 50%;
-            filter: blur(44px);
-            opacity: 0.55;
-            animation: drift 14s ease-in-out infinite;
+            border: 1px solid transparent;
         }
 
-        .blur-orb.one {
-            width: 360px;
-            height: 360px;
-            left: -80px;
-            top: 18%;
-            background: rgba(53,89,224,0.6);
-        }
-
-        .blur-orb.two {
-            width: 300px;
-            height: 300px;
-            right: -60px;
-            top: 12%;
-            background: rgba(6,182,212,0.5);
-            animation-delay: -4s;
-        }
-
-        .blur-orb.three {
-            width: 430px;
-            height: 430px;
-            right: 12%;
-            bottom: -140px;
-            background: rgba(37,99,235,0.35);
-            animation-delay: -8s;
-        }
-
-        @keyframes drift {
-            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-            50% { transform: translate3d(12px, -16px, 0) scale(1.07); }
-        }
-
-        .grid-overlay {
-            position: absolute;
+        .ring-outer {
             inset: 0;
-            background-image:
-                linear-gradient(rgba(51,65,85,0.07) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(51,65,85,0.07) 1px, transparent 1px);
-            background-size: 54px 54px;
-            mask-image: radial-gradient(circle at center, black 50%, transparent 95%);
-            -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 95%);
+            border-color: rgba(139,92,246,.22);
+            animation: orbit 9s linear infinite;
+        }
+        .ring-outer::before {
+            content: '';
+            position: absolute;
+            top: -5px; left: 50%;
+            width: 10px; height: 10px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            box-shadow: 0 0 14px 3px rgba(139,92,246,.6);
+            transform: translateX(-50%);
         }
 
-        .login-shell {
-            width: min(1120px, 92vw);
-            min-height: min(700px, 90vh);
-            border-radius: 26px;
-            overflow: hidden;
-            border: 1px solid rgba(148,163,184,0.4);
-            box-shadow: 0 30px 70px rgba(15, 23, 42, 0.18);
-            background: rgba(255,255,255,0.56);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            position: relative;
-            z-index: 10;
-            display: grid;
-            grid-template-columns: 1fr 430px;
-            animation: shellEnter .45s ease;
+        .ring-mid {
+            inset: 24px;
+            border-color: rgba(45,212,191,.18);
+            animation: orbit 6s linear infinite reverse;
+        }
+        .ring-mid::before {
+            content: '';
+            position: absolute;
+            bottom: -4px; left: 50%;
+            width: 7px; height: 7px;
+            background: #2dd4bf;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px rgba(45,212,191,.55);
+            transform: translateX(-50%);
         }
 
-        @keyframes shellEnter {
-            from { opacity: 0; transform: translateY(12px) scale(0.99); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+        .ring-inner {
+            inset: 50px;
+            border-color: rgba(251,191,36,.12);
+            animation: orbit 12s linear infinite;
+        }
+        .ring-inner::before {
+            content: '';
+            position: absolute;
+            top: -3px; right: 12px;
+            width: 5px; height: 5px;
+            background: #fbbf24;
+            border-radius: 50%;
+            box-shadow: 0 0 8px 2px rgba(251,191,36,.5);
         }
 
-        .left-pane {
-            padding: 3.2rem 3rem;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            background: linear-gradient(145deg, rgba(255,255,255,0.7), rgba(255,255,255,0.35));
+        @keyframes orbit {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
         }
 
-        .scene-badge {
-            width: fit-content;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            border: 1px solid rgba(53,89,224,0.3);
-            border-radius: 999px;
-            color: #1e3a8a;
-            background: rgba(53,89,224,0.1);
-            padding: 0.4rem 0.8rem;
-            font-size: 0.72rem;
-            font-weight: 600;
-            letter-spacing: 0.03em;
+        /* Core icon */
+        .orbital-core {
+            position: absolute;
+            inset: 66px;
+            border-radius: 50%;
+            background: radial-gradient(135deg, rgba(124,58,237,.3), rgba(45,212,191,.15));
+            border: 1px solid rgba(139,92,246,.3);
+            display: flex; align-items: center; justify-content: center;
         }
-
-        .left-title {
-            margin-top: 1.35rem;
-            font-size: clamp(2rem, 3.2vw, 3rem);
-            line-height: 1.06;
-            font-weight: 800;
-            color: #0f172a;
-            letter-spacing: -0.03em;
-            max-width: 560px;
-        }
-
-        .left-title .focus {
-            background: linear-gradient(120deg, #1d4ed8, #0891b2);
+        .orbital-core .bi {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #c4b5fd, #2dd4bf);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .left-sub {
-            margin-top: 0.95rem;
-            max-width: 520px;
-            color: #334155;
-            font-size: 0.92rem;
-            line-height: 1.7;
+        .art-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ede9fe;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 0.6rem;
+        }
+        .art-title em {
+            font-style: normal;
+            background: linear-gradient(90deg, #a78bfa 20%, #2dd4bf 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .art-sub {
+            font-size: 0.78rem;
+            color: #514e6a;
+            line-height: 1.65;
+            max-width: 300px;
+            margin: 0 auto;
         }
 
-        .principles {
-            margin-top: 1.7rem;
-            display: grid;
-            gap: 0.7rem;
-            max-width: 520px;
-        }
-
-        .principle {
-            display: flex;
-            align-items: center;
-            gap: 0.55rem;
-            color: #334155;
-            font-size: 0.82rem;
-            font-weight: 500;
-        }
-
-        .principle-mark {
-            width: 24px;
-            height: 24px;
-            border-radius: 7px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(53,89,224,0.2);
-            background: rgba(53,89,224,0.1);
-            color: #1d4ed8;
+        /* ═══════════ RIGHT — FORM PANEL ═══════════ */
+        .form-panel {
+            width: 430px;
             flex-shrink: 0;
-        }
-
-        .metric-row {
-            margin-top: 2rem;
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.6rem;
-        }
-
-        .metric {
-            border: 1px solid rgba(148,163,184,0.35);
-            border-radius: 12px;
-            background: rgba(255,255,255,0.58);
-            padding: 0.72rem 0.78rem;
-        }
-
-        .metric-value {
-            color: #0f172a;
-            font-size: 1.22rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .metric-label {
-            color: #64748b;
-            font-size: 0.64rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-top: 0.18rem;
-        }
-
-        .right-pane {
-            background: rgba(248,250,252,0.66);
-            border-left: 1px solid rgba(148,163,184,0.32);
-            padding: 2.7rem 2rem;
+            background: #100d1e;
+            border-left: 1px solid rgba(139,92,246,.12);
             display: flex;
             flex-direction: column;
             justify-content: center;
+            padding: 2.5rem 2.25rem;
             position: relative;
+            overflow: hidden;
         }
 
-        .brand-lockup {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            margin-bottom: 2rem;
+        /* Top gradient line */
+        .form-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #7c3aed 30%, #2dd4bf 70%, transparent 100%);
         }
 
-        .logo-cube {
-            width: 40px;
-            height: 40px;
-            border-radius: 11px;
+        /* Subtle background glow */
+        .form-panel::after {
+            content: '';
+            position: absolute;
+            width: 300px; height: 300px;
+            right: -80px; bottom: -80px;
+            background: radial-gradient(circle, rgba(139,92,246,.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .form-logo {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #7c3aed, #2dd4bf);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
             color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(140deg, #3559e0, #06b6d4);
-            box-shadow: 0 12px 20px rgba(53,89,224,0.3);
+            font-size: 1.1rem;
+            margin-bottom: 1.75rem;
+            box-shadow: 0 4px 16px rgba(124,58,237,.38);
+            position: relative; z-index: 1;
         }
 
-        .brand-title {
-            color: #0f172a;
-            font-size: 0.95rem;
+        .form-heading {
+            font-size: 1.5rem;
             font-weight: 800;
+            color: #ede9fe;
             letter-spacing: -0.02em;
+            margin-bottom: 0.35rem;
+            position: relative; z-index: 1;
         }
 
-        .brand-caption {
-            color: #64748b;
-            font-size: 0.66rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            margin-top: 1px;
+        .form-sub {
+            font-size: 0.77rem;
+            color: #514e6a;
+            margin-bottom: 1.875rem;
+            position: relative; z-index: 1;
         }
 
-        .form-title {
-            color: #0f172a;
-            font-size: 1.48rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.3rem;
-        }
-
-        .form-subtitle {
-            color: #64748b;
-            font-size: 0.8rem;
-            margin-bottom: 1.55rem;
-        }
-
+        /* Error */
         .form-error {
-            border: 1px solid rgba(185,28,28,0.28);
-            background: rgba(185,28,28,0.08);
-            color: #991b1b;
-            border-radius: 10px;
-            padding: 0.68rem 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.45rem;
-            font-size: 0.79rem;
-            margin-bottom: 0.95rem;
-            animation: errorIn .2s ease;
+            background: rgba(251,113,133,.08);
+            border: 1px solid rgba(251,113,133,.22);
+            border-radius: 7px;
+            color: #fda4af;
+            font-size: 0.77rem;
+            padding: 0.65rem 0.875rem;
+            margin-bottom: 1.125rem;
+            display: flex; align-items: center; gap: 0.5rem;
+            animation: popIn .2s ease;
+            position: relative; z-index: 1;
         }
-
-        @keyframes errorIn {
+        @keyframes popIn {
             from { opacity: 0; transform: translateY(-4px); }
-            to { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        .field {
-            margin-bottom: 0.9rem;
-        }
+        /* Fields */
+        .field { margin-bottom: 0.875rem; position: relative; z-index: 1; }
 
         .field-label {
             display: block;
-            color: #475569;
-            font-size: 0.69rem;
+            font-size: 0.71rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 0.44rem;
+            letter-spacing: 0.09em;
+            color: #9d9abc;
+            margin-bottom: 0.4rem;
         }
 
-        .field-wrap {
-            position: relative;
-        }
+        .field-wrap { position: relative; }
 
         .field-icon {
             position: absolute;
-            left: 0.78rem;
-            top: 50%;
+            left: 0.875rem; top: 50%;
             transform: translateY(-50%);
-            color: #94a3b8;
-            font-size: 0.9rem;
+            color: #514e6a;
+            font-size: 0.88rem;
             pointer-events: none;
             transition: color .15s;
         }
 
         .field-input {
             width: 100%;
-            border: 1px solid rgba(148,163,184,0.45);
-            border-radius: 11px;
-            background: rgba(255,255,255,0.9);
-            color: #0f172a;
+            background: rgba(255,255,255,.038);
+            border: 1px solid rgba(139,92,246,.1);
+            border-radius: 8px;
+            color: #ede9fe;
             font-family: 'Inter', sans-serif;
-            font-size: 0.87rem;
-            padding: 0.77rem 0.8rem 0.77rem 2.45rem;
+            font-size: 0.875rem;
+            padding: 0.775rem 0.875rem 0.775rem 2.75rem;
             outline: none;
-            transition: border-color .16s, box-shadow .16s, background .16s;
+            transition: all .15s;
         }
 
-        .field-input::placeholder {
-            color: #94a3b8;
-        }
-
-        .field-wrap:focus-within .field-icon {
-            color: #1d4ed8;
-        }
+        .field-input::placeholder { color: #3a3857; }
 
         .field-input:focus {
-            border-color: rgba(53,89,224,0.42);
-            box-shadow: 0 0 0 4px rgba(53,89,224,0.11);
-            background: #fff;
+            background: rgba(139,92,246,.07);
+            border-color: rgba(139,92,246,.38);
+            box-shadow: 0 0 0 3px rgba(139,92,246,.09);
         }
 
+        .field-wrap:focus-within .field-icon { color: #a78bfa; }
+
+        /* Submit */
         .btn-signin {
-            margin-top: 0.45rem;
             width: 100%;
+            background: linear-gradient(130deg, #7c3aed 0%, #4338ca 55%, #1d4ed8 100%);
             border: none;
-            border-radius: 11px;
-            padding: 0.86rem;
-            background: linear-gradient(135deg, #3559e0, #0ea5e9);
+            border-radius: 8px;
             color: #fff;
             font-family: 'Inter', sans-serif;
-            font-size: 0.88rem;
+            font-size: 0.9rem;
             font-weight: 700;
-            letter-spacing: 0.02em;
-            box-shadow: 0 15px 24px rgba(53,89,224,0.3);
+            padding: 0.875rem;
             cursor: pointer;
-            transition: transform .16s, box-shadow .16s;
+            margin-top: 0.375rem;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 20px rgba(124,58,237,.38);
+            letter-spacing: 0.01em;
+            transition: box-shadow .2s, transform .2s;
+            z-index: 1;
         }
 
         .btn-signin::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: -130%;
-            width: 110%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
-            transition: left .45s ease;
+            top: 0; left: -120%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+            transition: left .45s;
         }
 
         .btn-signin:hover {
+            box-shadow: 0 6px 28px rgba(124,58,237,.52);
             transform: translateY(-1px);
-            box-shadow: 0 18px 28px rgba(53,89,224,0.36);
+        }
+        .btn-signin:hover::after { left: 120%; }
+
+        /* Demo credentials */
+        .demo-section {
+            margin-top: 1.75rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(139,92,246,.08);
+            position: relative; z-index: 1;
         }
 
-        .btn-signin:hover::after {
-            left: 130%;
+        .demo-label {
+            font-size: 0.61rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #3a3857;
+            text-align: center;
+            margin-bottom: 0.75rem;
         }
 
-        .security-note {
-            margin-top: 1rem;
-            color: #64748b;
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .demo-card {
+            background: rgba(255,255,255,.02);
+            border: 1px solid rgba(139,92,246,.08);
+            border-radius: 7px;
+            padding: 0.625rem 0.75rem;
+        }
+
+        .demo-role {
+            font-size: 0.59rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+
+        .demo-card.is-admin .demo-role { color: #a78bfa; }
+        .demo-card.is-user  .demo-role { color: #2dd4bf; }
+
+        .demo-cred {
             font-size: 0.71rem;
-            display: flex;
-            align-items: center;
-            gap: 0.42rem;
+            color: #6e6a8a;
+            line-height: 1.5;
+            font-variant-numeric: tabular-nums;
         }
 
-        @media (max-width: 920px) {
-            .login-shell {
-                grid-template-columns: 1fr;
-                width: min(530px, 92vw);
-                min-height: auto;
-            }
-
-            .left-pane {
-                display: none;
-            }
-
-            .right-pane {
-                border-left: none;
-                padding: 2.2rem 1.5rem;
-            }
+        /* Responsive */
+        @media (max-width: 820px) {
+            .art-panel { display: none; }
+            .form-panel { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <div class="login-bg" aria-hidden="true">
-        <div class="blur-orb one"></div>
-        <div class="blur-orb two"></div>
-        <div class="blur-orb three"></div>
-        <div class="grid-overlay"></div>
+
+    <!-- ART PANEL (left) -->
+    <div class="art-panel">
+        <div class="constellation" id="constellation"></div>
+
+        <div class="art-center">
+            <!-- Orbital animation -->
+            <div class="orbital">
+                <div class="ring ring-outer"></div>
+                <div class="ring ring-mid"></div>
+                <div class="ring ring-inner"></div>
+                <div class="orbital-core">
+                    <i class="bi bi-bank2"></i>
+                </div>
+            </div>
+
+            <h1 class="art-title">Supervision<br><em>Bancaire</em></h1>
+            <p class="art-sub">
+                Surveillance des opérations en temps réel.<br>
+                Audit automatisé via triggers MySQL.
+            </p>
+        </div>
     </div>
 
-    <main class="login-shell" role="main">
-        <section class="left-pane">
-            <div>
-                <div class="scene-badge">
-                    <i class="bi bi-diagram-3"></i>
-                    Plateforme de supervision
-                </div>
+    <!-- FORM PANEL (right) -->
+    <div class="form-panel">
 
-                <h1 class="left-title">
-                    Contrôler les <span class="focus">versements bancaires</span> avec audit automatique par triggers.
-                </h1>
+        <div class="form-logo">
+            <i class="bi bi-bank2"></i>
+        </div>
 
-                <p class="left-sub">
-                    Interface orientee exploitation pour suivre les operations d'ajout, de modification et de suppression,
-                    avec mise a jour immediate des soldes clients.
-                </p>
+        <h2 class="form-heading">Connexion</h2>
+        <p class="form-sub">Accès sécurisé à la plateforme</p>
 
-                <div class="principles">
-                    <div class="principle">
-                        <span class="principle-mark"><i class="bi bi-shield-check"></i></span>
-                        Journal d'audit complet des actions utilisateur
-                    </div>
-                    <div class="principle">
-                        <span class="principle-mark"><i class="bi bi-arrow-repeat"></i></span>
-                        Reconciliation dynamique des montants et soldes
-                    </div>
-                    <div class="principle">
-                        <span class="principle-mark"><i class="bi bi-graph-up-arrow"></i></span>
-                        Vue statistique des insertions, mises a jour et suppressions
-                    </div>
+        <?php if ($error): ?>
+            <div class="form-error">
+                <i class="bi bi-exclamation-circle"></i>
+                <?= e($error) ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="post" action="<?= BASE_URL ?>?action=login" novalidate>
+            <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+
+            <div class="field">
+                <label class="field-label" for="username">Identifiant</label>
+                <div class="field-wrap">
+                    <i class="bi bi-person field-icon"></i>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           class="field-input"
+                           placeholder="Nom d'utilisateur"
+                           autocomplete="username"
+                           required
+                           value="<?= e($_POST['username'] ?? '') ?>">
                 </div>
             </div>
 
-            <div class="metric-row">
-                <div class="metric">
-                    <div class="metric-value">3</div>
-                    <div class="metric-label">Triggers actifs</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">I/U/D</div>
-                    <div class="metric-label">Traçabilite</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">100%</div>
-                    <div class="metric-label">Auditabilite</div>
-                </div>
-            </div>
-        </section>
-
-        <section class="right-pane">
-            <div class="brand-lockup">
-                <div class="logo-cube" aria-hidden="true">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L20 6.5V17.5L12 22L4 17.5V6.5L12 2Z" stroke="currentColor" stroke-width="1.6"/>
-                        <path d="M8 10.2L12 7.8L16 10.2V13.8L12 16.2L8 13.8V10.2Z" stroke="currentColor" stroke-width="1.6"/>
-                    </svg>
-                </div>
-                <div>
-                    <div class="brand-title">AstraVerse Audit</div>
-                    <div class="brand-caption">Supervision des versements</div>
+            <div class="field">
+                <label class="field-label" for="password">Mot de passe</label>
+                <div class="field-wrap">
+                    <i class="bi bi-lock field-icon"></i>
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           class="field-input"
+                           placeholder="••••••••"
+                           autocomplete="current-password"
+                           required>
                 </div>
             </div>
 
-            <h2 class="form-title">Connexion securisee</h2>
-            <p class="form-subtitle">Accedez au suivi des versements et au journal d'audit.</p>
+            <button type="submit" class="btn-signin">Se connecter</button>
+        </form>
 
-            <?php if ($error): ?>
-                <div class="form-error">
-                    <i class="bi bi-exclamation-circle"></i>
-                    <?= e($error) ?>
+        <div class="demo-section">
+            <div class="demo-label">Accès de démonstration</div>
+            <div class="demo-grid">
+                <div class="demo-card is-admin">
+                    <div class="demo-role">Admin</div>
+                    <div class="demo-cred">admin<br>Admin123!</div>
                 </div>
-            <?php endif; ?>
-
-            <form method="post" action="<?= BASE_URL ?>?action=login" novalidate>
-                <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
-
-                <div class="field">
-                    <label class="field-label" for="username">Identifiant</label>
-                    <div class="field-wrap">
-                        <i class="bi bi-person field-icon"></i>
-                        <input type="text"
-                               id="username"
-                               name="username"
-                               class="field-input"
-                               placeholder="Nom d'utilisateur"
-                               autocomplete="username"
-                               required
-                               value="<?= e($_POST['username'] ?? '') ?>">
-                    </div>
+                <div class="demo-card is-user">
+                    <div class="demo-role">Utilisateur</div>
+                    <div class="demo-cred">user1<br>User123!</div>
                 </div>
-
-                <div class="field">
-                    <label class="field-label" for="password">Mot de passe</label>
-                    <div class="field-wrap">
-                        <i class="bi bi-lock field-icon"></i>
-                        <input type="password"
-                               id="password"
-                               name="password"
-                               class="field-input"
-                               placeholder="Mot de passe"
-                               autocomplete="current-password"
-                               required>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-signin">Se connecter</button>
-            </form>
-
-            <div class="security-note">
-                <i class="bi bi-shield-lock"></i>
-                Session protegee, verification CSRF active.
             </div>
-        </section>
-    </main>
+        </div>
+
+    </div>
+
+    <script>
+    (function () {
+        // Generate constellation stars
+        var c = document.getElementById('constellation');
+        if (!c) return;
+        for (var i = 0; i < 30; i++) {
+            var s = document.createElement('div');
+            s.className = 'star';
+            var sz = Math.random() * 2.5 + 1;
+            s.style.cssText =
+                'width:' + sz + 'px;height:' + sz + 'px;' +
+                'left:' + (Math.random() * 100) + '%;' +
+                'top:'  + (Math.random() * 100) + '%;' +
+                'animation-duration:' + (2.5 + Math.random() * 4) + 's;' +
+                'animation-delay:-'   + (Math.random() * 5) + 's;';
+            c.appendChild(s);
+        }
+    })();
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"

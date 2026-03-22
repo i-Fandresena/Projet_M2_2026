@@ -8,7 +8,7 @@
 // Environnement
 // ------------------------------------------------------------
 define('APP_ENV',  'development');   // 'development' | 'production'
-define('APP_NAME', 'AstraVerse Audit');
+define('APP_NAME', 'Supervision Bancaire');
 define('APP_VERSION', '1.0.0');
 
 // ------------------------------------------------------------
