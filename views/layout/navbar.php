@@ -19,12 +19,15 @@ $initial  = strtoupper(substr($username, 0, 1));
 
     <!-- Logo + nom de l'application -->
     <div class="sidebar-brand">
-        <div class="sidebar-logo">
-            <i class="bi bi-bank2 text-white" style="font-size:1.1rem;"></i>
+        <div class="sidebar-logo" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L20 6.5V17.5L12 22L4 17.5V6.5L12 2Z" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M8 10.2L12 7.8L16 10.2V13.8L12 16.2L8 13.8V10.2Z" stroke="currentColor" stroke-width="1.6"/>
+            </svg>
         </div>
         <div>
-            <div class="brand-name">Supervision</div>
-            <div class="brand-sub">Bancaire</div>
+            <div class="brand-name">AstraVerse</div>
+            <div class="brand-sub">Audit des versements</div>
         </div>
     </div>
 
